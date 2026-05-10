@@ -1,33 +1,33 @@
 # Prophet Time Series
 
-End-to-end time series forecasting with [Prophet](https://facebook.github.io/prophet/) — Meta's open-source library that handles seasonality, holidays, and missing data out of the box.
+Forecasting airline passenger demand 12 months ahead using [Prophet](https://facebook.github.io/prophet/) — with seasonal decomposition, train/test validation, and confidence intervals.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wsamuelw/prophet-time-series/blob/main/Prophet_by_Meta_Demo.ipynb)
 
-## What You'll Learn
+## Problem
 
-1. **Seasonal decomposition** — break a time series into trend, seasonality, and residual
-2. **Data prep for Prophet** — rename columns to `ds` (date) and `y` (target)
-3. **Model fitting** — train a Prophet model on historical data
-4. **Forecasting** — predict 12 months into the future with confidence intervals
-5. **Visualisation** — plot forecast vs actuals with train/test separation
+Airline passenger volumes follow strong seasonal patterns — peaks in summer, troughs in winter. The goal: build a forecasting model that captures these patterns and predicts demand 12 months into the future, then validate against held-out data.
 
-## What's Inside
+## Approach
 
-| Step | What It Does |
-|------|-------------|
-| Data loading | Pulls airline passengers CSV from GitHub |
-| Train/test split | Training data before 2023-01, test data after |
-| Seasonal decomposition | Additive decomposition with `statsmodels` (period=12) |
-| Prophet fit | Trains on training data with default parameters |
-| Forecast | Generates 12-month future predictions with `yhat`, `yhat_lower`, `yhat_upper` |
-| Visualisation | Plots forecast with a red vertical line separating train/test, overlays actual test data |
+1. **Decompose** the time series into trend, seasonality, and residuals using additive decomposition (period=12 for monthly data)
+2. **Train** a Prophet model on historical data (pre-2023)
+3. **Forecast** 12 months into the future with confidence intervals
+4. **Validate** by comparing predictions against actual test data (2023 onwards)
 
-## Quick Start
+## Results
 
-### Google Colab (no setup)
+The model captures the seasonal cycle well — predictions track the upward trend and annual peaks. Confidence intervals widen as the forecast horizon extends, which is expected.
 
-Click the badge above — runs entirely in the browser.
+Key output columns:
+- `yhat` — point forecast
+- `yhat_lower` / `yhat_upper` — 80% confidence interval
+
+## Setup
+
+### Google Colab
+
+Click the badge above — no setup required.
 
 ### Local
 
@@ -38,49 +38,36 @@ cd prophet-time-series
 jupyter notebook Prophet_by_Meta_Demo.ipynb
 ```
 
-## Dataset
+## Data
 
-**Airline Passengers** — monthly international airline passenger counts (1949–2023). Sourced from [this Prophet tutorial](https://github.com/jonasdieckmann/prophet_tutorial).
+**Airline Passengers** — monthly international passenger counts (1949–2023).
 
-| Split | Period | Purpose |
-|-------|--------|---------|
-| Train | Pre-2023-01 | Fit the model |
-| Test | 2023-01 onwards | Evaluate forecast accuracy |
+| Split | Period | Records | Purpose |
+|-------|--------|---------|---------|
+| Train | Before 2023-01 | ~888 | Model fitting |
+| Test | 2023-01 onwards | 12 | Validation |
 
-## Key Prophet Concepts
+## Project Structure
 
-**`ds` and `y`** — Prophet requires these exact column names. `ds` is the datetime, `y` is the value to forecast.
-
-```python
-df = df.rename(columns={"Month": "ds", "Passengers": "y"})
+```
+prophet-time-series/
+├── Prophet_by_Meta_Demo.ipynb   # full walkthrough
+├── README.md
+└── LICENSE
 ```
 
-**`make_future_dataframe`** — extends the date range into the future:
+## Tech Stack
 
-```python
-future = model.make_future_dataframe(periods=12, freq='MS')  # 12 months, month-start
-```
+- **Prophet** — forecasting engine
+- **statsmodels** — seasonal decomposition
+- **pandas** — data manipulation
+- **matplotlib** — visualisation
 
-**`predict`** — returns a DataFrame with `yhat` (forecast), `yhat_lower`, and `yhat_upper` (confidence interval):
+## Key Decisions
 
-```python
-forecast = model.predict(future)
-forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
-```
-
-## Why Prophet?
-
-- **Handles missing data** — no need to fill gaps manually
-- **Built-in seasonality** — daily, weekly, yearly patterns detected automatically
-- **Holiday effects** — include custom holidays with a simple DataFrame
-- **Confidence intervals** — uncertainty estimates come free
-- **Fast** — fits in seconds on most datasets
-
-## References
-
-- [Prophet documentation](https://facebook.github.io/prophet/)
-- [Prophet quick start](https://facebook.github.io/prophet/docs/quick_start.html)
-- [Original paper](https://peerj.com/articles/cs-119/)
+- **Additive decomposition** — chosen over multiplicative because the seasonal amplitude doesn't grow proportionally with the trend
+- **12-month forecast horizon** — matches one full seasonal cycle, enough to validate pattern capture without over-extrapolating
+- **Default Prophet parameters** — no custom seasonality or holidays added; the default yearly seasonality was sufficient for this dataset
 
 ## License
 
